@@ -47,14 +47,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.alieser.inventivtestcase.R
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.alieser.inventivtestcase.Resource
-import com.alieser.inventivtestcase.Util
 import com.alieser.inventivtestcase.Util.toMasked
 import com.alieser.inventivtestcase.entity.WalletItemResponse
 import com.alieser.inventivtestcase.viewmodel.MainScreenViewModel
@@ -126,7 +122,6 @@ fun MainScreen(mainScreenViewModel : MainScreenViewModel = viewModel()) {
                 }
                 is Resource.Error -> {
                     // Toast message
-                    Text(text = "asd")
                 }
                 is Resource.Loading -> {
                     CircularProgressIndicator()
