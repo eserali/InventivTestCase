@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.alieser.inventivtestcase.Resource
 import com.alieser.inventivtestcase.entity.WalletResponse
 import com.alieser.inventivtestcase.repository.WalletRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -14,13 +15,13 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
+import javax.inject.Inject
 
-class MainScreenViewModel : ViewModel() {
-    var walletRepository = WalletRepository()
+@HiltViewModel
+class MainScreenViewModel @Inject constructor(private var walletRepository : WalletRepository) : ViewModel() {
     var refreshTime = MutableLiveData<String>()
     var response = MutableLiveData<Resource<WalletResponse>>()
     var time = Calendar.getInstance()
-
 
     init {
         getWallet()

@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.sp
 import com.alieser.inventivtestcase.R
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.alieser.inventivtestcase.Resource
 import com.alieser.inventivtestcase.Util.toMasked
@@ -58,8 +59,7 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 
 @Composable
-fun MainScreen(mainScreenViewModel : MainScreenViewModel = viewModel()) {
-    //val mainScreenViewModel : MainScreenViewModel = viewModel()
+fun MainScreen(mainScreenViewModel : MainScreenViewModel = hiltViewModel()) {
     val response = mainScreenViewModel.response.observeAsState().value
 
     Column(
@@ -186,7 +186,7 @@ fun MainScreen(mainScreenViewModel : MainScreenViewModel = viewModel()) {
 }
 @OptIn(ExperimentalFoundationApi::class, ExperimentalGlideComposeApi::class)
 @Composable
-fun SwipeCardScreen(walletList : List<WalletItemResponse>,mainScreenViewModel : MainScreenViewModel = viewModel()) {
+fun SwipeCardScreen(walletList : List<WalletItemResponse>,mainScreenViewModel : MainScreenViewModel = hiltViewModel()) {
     var indexState by remember {
         mutableIntStateOf(0)
     }
@@ -304,12 +304,6 @@ fun IndicatorDots(isSelected : Boolean) {
         .clip(CircleShape)
         .background(if (isSelected) Color.DarkGray else Color.LightGray)
     )
-}
-
-fun changeBalanceValue(count : String) : String {
-
-    val number = count.toDoubleOrNull() ?: return count
-    return String.format("%.2f", number / 100).replace(",", ".")
 }
 
 @Composable
