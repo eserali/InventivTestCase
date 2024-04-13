@@ -128,10 +128,7 @@ fun MainScreen(mainScreenViewModel : MainScreenViewModel = hiltViewModel()) {
                 }
             }
         }
-
         //Spacer(modifier = Modifier.height(50.dp))
-        
-
         Column(
             modifier = Modifier.wrapContentSize(),
             verticalArrangement = Arrangement.Bottom,
@@ -191,11 +188,16 @@ fun SwipeCardScreen(walletList : List<WalletItemResponse>,mainScreenViewModel : 
         mutableIntStateOf(0)
     }
     val pageCount = walletList.size
-    val pagerState = rememberPagerState {
+    val pagerState = rememberPagerState(initialPage = 0) {
         pageCount
     }
     val refreshTime = mainScreenViewModel.refreshTime.observeAsState().value
 
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.currentPage }.collect { page ->
+            indexState = page
+        }
+    }
     Column(modifier = Modifier
         .fillMaxWidth()
         .padding(start = 30.dp, end = 30.dp)
@@ -215,7 +217,6 @@ fun SwipeCardScreen(walletList : List<WalletItemResponse>,mainScreenViewModel : 
                 modifier = Modifier
                     .fillMaxSize()
             ) {index ->
-                indexState = index
                 GlideImage(model = walletList[index].image, contentDescription = "", contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize())
 
