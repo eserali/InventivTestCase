@@ -32,7 +32,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,15 +48,24 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.alieser.inventivtestcase.R
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.alieser.inventivtestcase.Resource
+import com.alieser.inventivtestcase.Util
+import com.alieser.inventivtestcase.Util.toMasked
+import com.alieser.inventivtestcase.entity.WalletItemResponse
+import com.alieser.inventivtestcase.viewmodel.MainScreenViewModel
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 
 @Composable
-fun MainScreen() {
-    val imageList = listOf<String>(
-        "https://dummyimage.com/450x300/5db185/18163d.png&text=INVENTIV",
-        "https://dummyimage.com/450x300/5db185/18163d.png&text=INVENTIV-2"
-    )
+fun MainScreen(mainScreenViewModel : MainScreenViewModel = viewModel()) {
+    //val mainScreenViewModel : MainScreenViewModel = viewModel()
+    val response = mainScreenViewModel.response.observeAsState().value
+
     Column(
         modifier = Modifier
             .fillMaxSize(),
@@ -108,39 +117,25 @@ fun MainScreen() {
 
             }
         }
-
-        ImageSlider(imageList = imageList)
-        //Spacer(modifier = Modifier.height(50.dp))
-        Column(
-            modifier = Modifier.wrapContentSize(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(text = "BALANCE", color = Color.Black)
-            Row(modifier = Modifier
-                .wrapContentWidth()
-                .height(50.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center) {
-                Text(text = "0 seconds ago")
-                IconButton(onClick = {
-
-                }) {
-                    Icon(painter = painterResource(id = R.drawable.refresh_icon), contentDescription = "")
+        if (response != null) {
+            when(response) {
+                is Resource.Success -> {
+                    if (response.data != null) {
+                        SwipeCardScreen(walletList = response.data)
+                    }
                 }
-            }
-            Text(text = changeBalanceValue("100050"), fontSize = 30.sp, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 10.dp, end = 10.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(text = "PENDING BALANCE")
-                Text(text = "₺500.00")
+                is Resource.Error -> {
+                    // Toast message
+                    Text(text = "asd")
+                }
+                is Resource.Loading -> {
+                    CircularProgressIndicator()
+                }
             }
         }
 
+        //Spacer(modifier = Modifier.height(50.dp))
+        
 
         Column(
             modifier = Modifier.wrapContentSize(),
@@ -196,26 +191,20 @@ fun MainScreen() {
 }
 @OptIn(ExperimentalFoundationApi::class, ExperimentalGlideComposeApi::class)
 @Composable
-fun ImageSlider(imageList : List<String>) {
+fun SwipeCardScreen(walletList : List<WalletItemResponse>,mainScreenViewModel : MainScreenViewModel = viewModel()) {
     var indexState by remember {
         mutableIntStateOf(0)
     }
-    val pageCount = imageList.size
+    val pageCount = walletList.size
     val pagerState = rememberPagerState {
         pageCount
     }
-    val cardNumberList = listOf<String>(
-        "1234567812345678",
-        "1234123412341234"
-    )
-    val cvvNumberList = listOf<String>(
-        "123",
-        "321"
-    )
+    val refreshTime = mainScreenViewModel.refreshTime.observeAsState().value
+
     Column(modifier = Modifier
         .fillMaxWidth()
         .padding(start = 30.dp, end = 30.dp)
-        .height(250.dp),
+        .wrapContentHeight(),
         horizontalAlignment = Alignment.CenterHorizontally)
     {
         Box(
@@ -232,15 +221,18 @@ fun ImageSlider(imageList : List<String>) {
                     .fillMaxSize()
             ) {index ->
                 indexState = index
-                GlideImage(model = imageList[index], contentDescription = "", contentScale = ContentScale.Crop,
+                GlideImage(model = walletList[index].image, contentDescription = "", contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize())
+
             }
+
             Row (
                 modifier = Modifier.padding(start = 16.dp,bottom = 40.dp),
                 verticalAlignment = Alignment.CenterVertically
             )
             {
-                Text(text = maskCardNumber(cardNumberList[indexState]))
+
+                Text(text = (walletList[indexState].number.toMasked(4, chunkSize = 4)))
                 Spacer(modifier = Modifier.width(80.dp))
                 CustomIcon(R.drawable.copy_icon)
                 Spacer(modifier = Modifier.height(30.dp))
@@ -254,7 +246,7 @@ fun ImageSlider(imageList : List<String>) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.End
             ) {
-                Text(text = "CVV ***")
+                Text(text = "CVV ${walletList[indexState].cvv.toMasked(0)}")
                 Spacer(modifier = Modifier.width(10.dp))
                 CustomIcon(R.drawable.detail_icon)
             }
@@ -262,9 +254,40 @@ fun ImageSlider(imageList : List<String>) {
         }
         Spacer(modifier = Modifier.height(10.dp))
         PageIndicator(pageCount = pageCount, currentPage = pagerState.currentPage)
+        Spacer(modifier = Modifier.height(30.dp))
+        Column(
+            modifier = Modifier.wrapContentSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(text = "BALANCE", color = Color.Black)
+            Row(modifier = Modifier
+                .wrapContentWidth()
+                .height(50.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center) {
+                Text(text = refreshTime!!)
+                IconButton(onClick = {
+
+                }) {
+                    Icon(painter = painterResource(id = R.drawable.refresh_icon), contentDescription = "", modifier = Modifier.clickable {
+                        mainScreenViewModel.getWallet()
+                    })
+                }
+            }
+            Text(text = walletList[indexState].balance.toString(), fontSize = 30.sp, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 10.dp, end = 10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(text = "PENDING BALANCE")
+                Text(text = walletList[indexState].pendingBalance.toString())
+            }
+        }
     }
 }
-
 @Composable
 fun PageIndicator(pageCount : Int,currentPage : Int) {
     Row (
@@ -288,29 +311,8 @@ fun IndicatorDots(isSelected : Boolean) {
     )
 }
 
-fun maskCardNumber(cardNumber : String) : String {
-    // gelen stringi trim ve length kontrolü yapayım mı sor
-    val maskCardNumberText = StringBuilder()
-
-    for (i in cardNumber.indices) {
-        if (i > 0 && i % 4 == 0) {
-            maskCardNumberText.append(' ')
-        }
-        if (i < cardNumber.length - 4) {
-            maskCardNumberText.append('*')
-        } else {
-            maskCardNumberText.append(cardNumber[i])
-        }
-    }
-    return  maskCardNumberText.toString()
-}
 fun changeBalanceValue(count : String) : String {
-    /*
-    for (i in count.length - 1 downTo 0 ) {
-        if(count[i].isDigit()) {
 
-        }
-    }*/
     val number = count.toDoubleOrNull() ?: return count
     return String.format("%.2f", number / 100).replace(",", ".")
 }
