@@ -1,5 +1,6 @@
 package com.alieser.inventivtestcase.view
 
+import android.widget.Toast
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -49,10 +50,15 @@ import androidx.compose.ui.unit.sp
 import com.alieser.inventivtestcase.R
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.platform.ClipboardManager
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
+import com.alieser.inventivtestcase.CardRefreshTimeManager
 import com.alieser.inventivtestcase.Resource
-import com.alieser.inventivtestcase.Util.toMasked
+import com.alieser.inventivtestcase.helper.Util.toMasked
+import com.alieser.inventivtestcase.helper.Util.toSplit
 import com.alieser.inventivtestcase.entity.WalletItemResponse
 import com.alieser.inventivtestcase.viewmodel.MainScreenViewModel
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
@@ -61,7 +67,7 @@ import com.bumptech.glide.integration.compose.GlideImage
 @Composable
 fun MainScreen(mainScreenViewModel : MainScreenViewModel = hiltViewModel()) {
     val response = mainScreenViewModel.response.observeAsState().value
-
+    val context = LocalContext.current
     Column(
         modifier = Modifier
             .fillMaxSize(),
@@ -121,14 +127,14 @@ fun MainScreen(mainScreenViewModel : MainScreenViewModel = hiltViewModel()) {
                     }
                 }
                 is Resource.Error -> {
-                    // Toast message
+                    Toast.makeText(context,"Something went wrong",Toast.LENGTH_LONG).show()
                 }
                 is Resource.Loading -> {
                     CircularProgressIndicator()
                 }
             }
         }
-        //Spacer(modifier = Modifier.height(50.dp))
+
         Column(
             modifier = Modifier.wrapContentSize(),
             verticalArrangement = Arrangement.Bottom,
@@ -184,23 +190,51 @@ fun MainScreen(mainScreenViewModel : MainScreenViewModel = hiltViewModel()) {
 @OptIn(ExperimentalFoundationApi::class, ExperimentalGlideComposeApi::class)
 @Composable
 fun SwipeCardScreen(walletList : List<WalletItemResponse>,mainScreenViewModel : MainScreenViewModel = hiltViewModel()) {
+
+    val clipboardManager : ClipboardManager = LocalClipboardManager.current
+    val context = LocalContext.current
+
     var indexState by remember {
         mutableIntStateOf(0)
     }
+    var cardNumberState by remember {
+        mutableStateOf("")
+    }
+    var cvvNumberState by remember {
+        mutableStateOf("")
+    }
+    var isVisible  by remember {
+        mutableStateOf(false)
+    }
+
     val pageCount = walletList.size
     val pagerState = rememberPagerState(initialPage = 0) {
         pageCount
     }
-    val refreshTime = mainScreenViewModel.refreshTime.observeAsState().value
+    var refreshTime by remember {
+        mutableStateOf(CardRefreshTimeManager.setOrGetLastProcessTimeAgo(walletList[indexState].number))
+    }
+
+    // val refreshTime = mainScreenViewModel.refreshTime.observeAsState().value
+
+    if (isVisible) {
+        cardNumberState = walletList[indexState].number.toSplit(4)
+        cvvNumberState = walletList[indexState].cvv
+    } else {
+        cardNumberState = walletList[indexState].number.toMasked(4, chunkSize = 4)
+        cvvNumberState = walletList[indexState].cvv.toMasked(0)
+    }
 
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.currentPage }.collect { page ->
             indexState = page
+
         }
     }
+
     Column(modifier = Modifier
         .fillMaxWidth()
-        .padding(start = 30.dp, end = 30.dp)
+        .padding(start = 20.dp, end = 20.dp)
         .wrapContentHeight(),
         horizontalAlignment = Alignment.CenterHorizontally)
     {
@@ -219,18 +253,23 @@ fun SwipeCardScreen(walletList : List<WalletItemResponse>,mainScreenViewModel : 
             ) {index ->
                 GlideImage(model = walletList[index].image, contentDescription = "", contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize())
-
             }
 
             Row (
-                modifier = Modifier.padding(start = 16.dp,bottom = 40.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+                    .padding(start = 16.dp, bottom = 40.dp),
                 verticalAlignment = Alignment.CenterVertically
             )
             {
 
-                Text(text = (walletList[indexState].number.toMasked(4, chunkSize = 4)))
+                Text(text = (cardNumberState), fontSize = 18.sp)
                 Spacer(modifier = Modifier.width(80.dp))
-                CustomIcon(R.drawable.copy_icon)
+                CustomCopyIcon(R.drawable.copy_icon) {
+                    clipboardManager.setText(AnnotatedString(walletList[indexState].number))
+                    Toast.makeText(context,"Card number copied",Toast.LENGTH_LONG).show()
+                }
                 Spacer(modifier = Modifier.height(30.dp))
             }
 
@@ -238,13 +277,17 @@ fun SwipeCardScreen(walletList : List<WalletItemResponse>,mainScreenViewModel : 
                 modifier = Modifier
                     .fillMaxWidth()
                     .wrapContentHeight()
-                    .padding(start = 16.dp, bottom = 20.dp, end = 75.dp),
+                    .padding(start = 16.dp, bottom = 10.dp, end = 90.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.End
             ) {
-                Text(text = "CVV ${walletList[indexState].cvv.toMasked(0)}")
+                Text(text = "CVV")
                 Spacer(modifier = Modifier.width(10.dp))
-                CustomIcon(R.drawable.detail_icon)
+                Text(text = cvvNumberState)
+                Spacer(modifier = Modifier.width(10.dp))
+                CustomVisibleIcon(isVisible) {
+                    isVisible = !isVisible
+                }
             }
 
         }
@@ -260,15 +303,20 @@ fun SwipeCardScreen(walletList : List<WalletItemResponse>,mainScreenViewModel : 
                 .wrapContentWidth()
                 .height(50.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center) {
-                Text(text = refreshTime!!)
-                IconButton(onClick = {
+                horizontalArrangement = Arrangement.Center)
+            {
+                Text(text = CardRefreshTimeManager.setOrGetLastProcessTimeAgo(walletList[indexState].number))
+                IconButton(
+                    onClick = {
+                        CardRefreshTimeManager.resetCardRefreshTime(walletList[indexState].number)
 
-                }) {
-                    Icon(painter = painterResource(id = R.drawable.refresh_icon), contentDescription = "", modifier = Modifier.clickable {
-                        mainScreenViewModel.getWallet()
-                    })
+                })
+                {
+                    Icon(
+                        painter = painterResource(id = R.drawable.refresh_icon),
+                        contentDescription = "")
                 }
+
             }
             Text(text = walletList[indexState].balance.toString(), fontSize = 30.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(8.dp))
@@ -298,7 +346,7 @@ fun PageIndicator(pageCount : Int,currentPage : Int) {
 
 @Composable
 fun IndicatorDots(isSelected : Boolean) {
-    val size = animateDpAsState(targetValue = 8.dp)
+    val size = animateDpAsState(targetValue = 8.dp, label = "")
     Box(modifier = Modifier
         .padding(2.dp)
         .size(size.value)
@@ -308,14 +356,49 @@ fun IndicatorDots(isSelected : Boolean) {
 }
 
 @Composable
-fun CustomIcon(iconId : Int) {
+fun CustomVisibleIcon(isVisible : Boolean,onClick : () -> Unit) {
+
+    var iconId  by remember {
+        mutableIntStateOf(R.drawable.invisible_icon)
+    }
+    if (isVisible) {
+        iconId = R.drawable.visible_icon
+    }
+    else {
+        iconId = R.drawable.invisible_icon
+    }
     Column(modifier = Modifier
-        .size(20.dp)
+        .size(25.dp)
         .border(1.dp, Color.Black, shape = RectangleShape)
         .background(Color.White),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Icon(painter = painterResource(id = iconId),"")
+        IconButton(
+            onClick = {
+                //isVisible = !isVisible
+                onClick()
+            }) {
+            Icon(painter = painterResource(id = iconId),"")
+        }
+    }
+}
+
+@Composable
+fun CustomCopyIcon(iconId : Int,onClick: () -> Unit) {
+    Column(modifier = Modifier
+        .size(25.dp)
+        .border(1.dp, Color.Black, shape = RectangleShape)
+        .background(Color.White),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        IconButton(
+            onClick = {
+                onClick()
+            }) {
+            Icon(painter = painterResource(id = iconId),"")
+        }
+
     }
 }

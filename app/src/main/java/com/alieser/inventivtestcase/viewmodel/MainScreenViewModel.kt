@@ -3,6 +3,7 @@ package com.alieser.inventivtestcase.viewmodel
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.alieser.inventivtestcase.CardRefreshTimeManager
 import com.alieser.inventivtestcase.Resource
 import com.alieser.inventivtestcase.entity.WalletResponse
 import com.alieser.inventivtestcase.repository.WalletRepository
@@ -21,23 +22,22 @@ import javax.inject.Inject
 class MainScreenViewModel @Inject constructor(private var walletRepository : WalletRepository) : ViewModel() {
     var refreshTime = MutableLiveData<String>()
     var response = MutableLiveData<Resource<WalletResponse>>()
-    var time = Calendar.getInstance()
+    //var time = Calendar.getInstance()
 
     init {
         getWallet()
     }
-
     fun getWallet() {
         viewModelScope.launch() {
 
             response.value = Resource.Loading()
-            var result = withContext(Dispatchers.IO) {
+            val result = withContext(Dispatchers.IO) {
                 walletRepository.getWallet()
             }
             when(result) {
                 is Resource.Success -> {
                     response.value = Resource.Success(result.data!!)
-                    refreshTime.value = getRefreshTime()
+                    //refreshTime.value = getRefreshTime()
                 }
                 is Resource.Error -> {
                     response.value = Resource.Error(result.message.toString())
@@ -48,15 +48,6 @@ class MainScreenViewModel @Inject constructor(private var walletRepository : Wal
             }
         }
     }
-
-    fun getRefreshTime() : String {
-        val lastProcessTime = Calendar.getInstance()
-        val refreshTime = (lastProcessTime.timeInMillis - time.timeInMillis) / 1000
-        time = lastProcessTime
-        return "$refreshTime seconds ago"
-    }
-
-
 
 
 }
