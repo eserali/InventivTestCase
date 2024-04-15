@@ -8,6 +8,8 @@
     <string name="topUpText">TOP UP</string>
     <string name="manageText">MANAGE</string>
     <string name="whereDoText">WHERE DO I USE?</string>
+    <string name="walletText">WALLET</string>
+    <string name="salePointsText">SALE POINTS</string>
 
 
 </resources>

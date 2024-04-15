@@ -99,7 +99,7 @@ fun MainScreen(mainScreenViewModel : MainScreenViewModel = hiltViewModel()) {
             ) {
                 Icon(painter = painterResource(id = R.drawable.wallet_icon), contentDescription = "")
                 Spacer(modifier = Modifier.width(10.dp))
-                Text(text = "WALLET", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text(text = stringResource(id = R.string.walletText), color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
             }
             ElevatedButton(
                 modifier = Modifier
@@ -117,7 +117,7 @@ fun MainScreen(mainScreenViewModel : MainScreenViewModel = hiltViewModel()) {
             ) {
                 Icon(painter = painterResource(id = R.drawable.market_icon), contentDescription = "")
                 Spacer(modifier = Modifier.width(10.dp))
-                Text(text = "SALE POINTS", color = Color.White,fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text(text = stringResource(id = R.string.salePointsText), color = Color.White,fontSize = 18.sp, fontWeight = FontWeight.Bold)
 
             }
         }
@@ -191,7 +191,7 @@ fun MainScreen(mainScreenViewModel : MainScreenViewModel = hiltViewModel()) {
 }
 @OptIn(ExperimentalFoundationApi::class, ExperimentalGlideComposeApi::class)
 @Composable
-fun SwipeCardScreen(walletList : List<WalletItemResponse>,mainScreenViewModel : MainScreenViewModel = hiltViewModel()) {
+fun SwipeCardScreen(walletList : List<WalletItemResponse>) {
 
     val clipboardManager : ClipboardManager = LocalClipboardManager.current
     val context = LocalContext.current
@@ -208,9 +208,14 @@ fun SwipeCardScreen(walletList : List<WalletItemResponse>,mainScreenViewModel : 
     var isVisible  by remember {
         mutableStateOf(false)
     }
-
+    var isRefresh  by remember {
+        mutableStateOf(false)
+    }
+    var refreshTimeText by remember {
+        mutableStateOf("")
+    }
     val pageCount = walletList.size
-    var pagerState = rememberPagerState() {
+    val pagerState = rememberPagerState() {
         pageCount
     }
 
@@ -222,9 +227,17 @@ fun SwipeCardScreen(walletList : List<WalletItemResponse>,mainScreenViewModel : 
         cvvNumberState = walletList[indexState].cvv.toMasked(0)
     }
 
+    if (isRefresh) {
+        isRefresh = false
+        refreshTimeText = CardRefreshTimeManager.resetCardRefreshTime(walletList[indexState].number)
+    } else {
+        refreshTimeText = CardRefreshTimeManager.setOrGetLastProcessTimeAgo(walletList[indexState].number)
+    }
+
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.currentPage }.collect { page ->
             indexState = page
+            isVisible = CardRefreshTimeManager.changeAndGetCardInfo(walletList[indexState].number)
         }
     }
 
@@ -256,7 +269,7 @@ fun SwipeCardScreen(walletList : List<WalletItemResponse>,mainScreenViewModel : 
                 modifier = Modifier
                     .fillMaxWidth()
                     .wrapContentHeight()
-                    .padding(bottom = 10.dp, top = 10.dp,end = 30.dp),
+                    .padding(bottom = 10.dp, top = 10.dp, end = 30.dp),
                 horizontalAlignment = Alignment.End
 
             ) {
@@ -288,7 +301,7 @@ fun SwipeCardScreen(walletList : List<WalletItemResponse>,mainScreenViewModel : 
                     Text(text = cvvNumberState)
                     Spacer(modifier = Modifier.width(6.dp))
                     CustomVisibleIcon(isVisible) {
-                        isVisible = !isVisible
+                        isVisible = CardRefreshTimeManager.changeAndGetCardInfo(walletList[indexState].number,true)
                     }
                 }
             }
@@ -307,12 +320,8 @@ fun SwipeCardScreen(walletList : List<WalletItemResponse>,mainScreenViewModel : 
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center)
             {
-                Text(text = CardRefreshTimeManager.setOrGetLastProcessTimeAgo(walletList[indexState].number))
-                IconButton(
-                    onClick = {
-                        CardRefreshTimeManager.resetCardRefreshTime(walletList[indexState].number)
-                        mainScreenViewModel.getWallet()
-                })
+                Text(text = refreshTimeText)
+                IconButton(onClick = { isRefresh = true })
                 {
                     Icon(
                         painter = painterResource(id = R.drawable.refresh_icon),

@@ -9,7 +9,7 @@ class CardRefreshTime(
 {
     private var isFirstTime : Boolean = true
     private var lastProcessTime : Calendar = Calendar.getInstance()
-
+    var isCardInfoVisible : Boolean = false
     fun getLastProcessTime() : String {
 
         if (isFirstTime) {
@@ -31,8 +31,14 @@ class CardRefreshTime(
         }
         return "$refreshTime seconds ago"
     }
-
-    fun resetLastProcessTime() {
-        lastProcessTime = Calendar.getInstance()
+    fun resetLastProcessTime() : String {
+        isFirstTime = true
+        return getLastProcessTime()
     }
+    fun changeAndGetCardInfo()  : Boolean {
+        isCardInfoVisible = !isCardInfoVisible
+        return isCardInfoVisible
+    }
+
+
 }

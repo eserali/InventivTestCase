@@ -8,15 +8,13 @@ object CardRefreshTimeManager {
     var cardRefreshTimes = ArrayList<CardRefreshTime>()
 
     fun setOrGetLastProcessTimeAgo(cardNumber : String) : String {
-
         val card = getCardRefreshTime(cardNumber)
-
         return card.getLastProcessTime()
     }
 
-    fun resetCardRefreshTime(cardNumber : String) {
+    fun resetCardRefreshTime(cardNumber : String) : String {
         val card = getCardRefreshTime(cardNumber)
-        card.resetLastProcessTime()
+        return card.resetLastProcessTime()
     }
 
     private fun getCardRefreshTime(cardNumber : String) : CardRefreshTime {
@@ -31,6 +29,15 @@ object CardRefreshTimeManager {
         } else {
             card
         }
+    }
+    fun changeAndGetCardInfo(cardNumber : String,isChanged : Boolean = false) : Boolean {
+        val card = getCardRefreshTime(cardNumber)
+        return if (isChanged) {
+            card.changeAndGetCardInfo()
+        }else {
+            card.isCardInfoVisible
+        }
+
     }
 
 
