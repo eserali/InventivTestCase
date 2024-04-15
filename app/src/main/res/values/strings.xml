@@ -1,4 +1,13 @@
 <resources>
     <string name="app_name">InventivTestCase</string>
 
+    <string name="balanceText">BALANCE</string>
+    <string name="pendingBalanceText">PENDING BALANCE</string>
+    <string name="cvvText">CVV</string>
+    <string name="payText">PAY</string>
+    <string name="topUpText">TOP UP</string>
+    <string name="manageText">MANAGE</string>
+    <string name="whereDoText">WHERE DO I USE?</string>
+
+
 </resources>

@@ -53,6 +53,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.alieser.inventivtestcase.CardRefreshTimeManager
@@ -63,6 +64,7 @@ import com.alieser.inventivtestcase.entity.WalletItemResponse
 import com.alieser.inventivtestcase.viewmodel.MainScreenViewModel
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
+import kotlinx.coroutines.launch
 
 @Composable
 fun MainScreen(mainScreenViewModel : MainScreenViewModel = hiltViewModel()) {
@@ -152,7 +154,7 @@ fun MainScreen(mainScreenViewModel : MainScreenViewModel = hiltViewModel()) {
             ) {
                 Icon(painter = painterResource(id = R.drawable.map_icon), contentDescription = "")
                 Spacer(modifier = Modifier.width(10.dp))
-                Text(text = "WHERE DO I USE?", color = Color.Black)
+                Text(text = stringResource(id = R.string.whereDoText), color = Color.Black)
             }
             Spacer(modifier = Modifier.height(4.dp))
             Button(
@@ -168,7 +170,7 @@ fun MainScreen(mainScreenViewModel : MainScreenViewModel = hiltViewModel()) {
                     containerColor = colorResource(id = R.color.topBarColor)
                 )
             ) {
-                Text(text = "PAY")
+                Text(text = stringResource(id = R.string.payText))
             }
             Row(modifier = Modifier
                 .fillMaxWidth()
@@ -177,10 +179,10 @@ fun MainScreen(mainScreenViewModel : MainScreenViewModel = hiltViewModel()) {
                 verticalAlignment = Alignment.Bottom,
                 horizontalArrangement = Arrangement.Center)
             {
-                Text(text = "TOP UP", modifier = Modifier
+                Text(text = stringResource(id = R.string.topUpText), modifier = Modifier
                     .weight(1f)
                     .clickable { }, textAlign = TextAlign.Center)
-                Text(text = "MANAGE", modifier = Modifier
+                Text(text = stringResource(id = R.string.manageText), modifier = Modifier
                     .weight(1f)
                     .clickable { }, textAlign = TextAlign.Center)
             }
@@ -208,14 +210,9 @@ fun SwipeCardScreen(walletList : List<WalletItemResponse>,mainScreenViewModel : 
     }
 
     val pageCount = walletList.size
-    val pagerState = rememberPagerState(initialPage = 0) {
+    var pagerState = rememberPagerState() {
         pageCount
     }
-    var refreshTime by remember {
-        mutableStateOf(CardRefreshTimeManager.setOrGetLastProcessTimeAgo(walletList[indexState].number))
-    }
-
-    // val refreshTime = mainScreenViewModel.refreshTime.observeAsState().value
 
     if (isVisible) {
         cardNumberState = walletList[indexState].number.toSplit(4)
@@ -228,20 +225,21 @@ fun SwipeCardScreen(walletList : List<WalletItemResponse>,mainScreenViewModel : 
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.currentPage }.collect { page ->
             indexState = page
-
         }
     }
 
     Column(modifier = Modifier
         .fillMaxWidth()
-        .padding(start = 20.dp, end = 20.dp)
+        .padding(start = 10.dp, end = 10.dp)
         .wrapContentHeight(),
-        horizontalAlignment = Alignment.CenterHorizontally)
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Top)
     {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(220.dp),
+                .height(220.dp)
+                .padding(start = 24.dp, end = 24.dp),
             contentAlignment = Alignment.BottomStart
         )
         {
@@ -254,42 +252,46 @@ fun SwipeCardScreen(walletList : List<WalletItemResponse>,mainScreenViewModel : 
                 GlideImage(model = walletList[index].image, contentDescription = "", contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize())
             }
-
-            Row (
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .wrapContentHeight()
-                    .padding(start = 16.dp, bottom = 40.dp),
-                verticalAlignment = Alignment.CenterVertically
-            )
-            {
+                    .padding(bottom = 10.dp, top = 10.dp,end = 30.dp),
+                horizontalAlignment = Alignment.End
 
-                Text(text = (cardNumberState), fontSize = 18.sp)
-                Spacer(modifier = Modifier.width(80.dp))
-                CustomCopyIcon(R.drawable.copy_icon) {
-                    clipboardManager.setText(AnnotatedString(walletList[indexState].number))
-                    Toast.makeText(context,"Card number copied",Toast.LENGTH_LONG).show()
-                }
-                Spacer(modifier = Modifier.height(30.dp))
-            }
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .wrapContentHeight()
-                    .padding(start = 16.dp, bottom = 10.dp, end = 90.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.End
             ) {
-                Text(text = "CVV")
-                Spacer(modifier = Modifier.width(10.dp))
-                Text(text = cvvNumberState)
-                Spacer(modifier = Modifier.width(10.dp))
-                CustomVisibleIcon(isVisible) {
-                    isVisible = !isVisible
+                Row (
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight()
+                        .padding(start = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                )
+                {
+                    Text(text = (cardNumberState), modifier = Modifier.wrapContentSize())
+                    CustomCopyIcon(R.drawable.copy_icon) {
+                        clipboardManager.setText(AnnotatedString(walletList[indexState].number))
+                        Toast.makeText(context,"Card number copied",Toast.LENGTH_LONG).show()
+                    }
+                }
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(
+                    modifier = Modifier
+                        .wrapContentSize()
+                        .padding(start = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+
+                ) {
+                    Text(text = stringResource(id = R.string.cvvText))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(text = cvvNumberState)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    CustomVisibleIcon(isVisible) {
+                        isVisible = !isVisible
+                    }
                 }
             }
-
         }
         Spacer(modifier = Modifier.height(10.dp))
         PageIndicator(pageCount = pageCount, currentPage = pagerState.currentPage)
@@ -298,7 +300,7 @@ fun SwipeCardScreen(walletList : List<WalletItemResponse>,mainScreenViewModel : 
             modifier = Modifier.wrapContentSize(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(text = "BALANCE", color = Color.Black)
+            Text(text = stringResource(id = R.string.balanceText), color = Color.Black)
             Row(modifier = Modifier
                 .wrapContentWidth()
                 .height(50.dp),
@@ -309,7 +311,7 @@ fun SwipeCardScreen(walletList : List<WalletItemResponse>,mainScreenViewModel : 
                 IconButton(
                     onClick = {
                         CardRefreshTimeManager.resetCardRefreshTime(walletList[indexState].number)
-
+                        mainScreenViewModel.getWallet()
                 })
                 {
                     Icon(
@@ -322,11 +324,10 @@ fun SwipeCardScreen(walletList : List<WalletItemResponse>,mainScreenViewModel : 
             Spacer(modifier = Modifier.height(8.dp))
             Row(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 10.dp, end = 10.dp),
+                    .fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(text = "PENDING BALANCE")
+                Text(text = stringResource(id = R.string.pendingBalanceText),color = Color.Black)
                 Text(text = walletList[indexState].pendingBalance.toString())
             }
         }
@@ -376,7 +377,6 @@ fun CustomVisibleIcon(isVisible : Boolean,onClick : () -> Unit) {
     ) {
         IconButton(
             onClick = {
-                //isVisible = !isVisible
                 onClick()
             }) {
             Icon(painter = painterResource(id = iconId),"")

@@ -20,16 +20,12 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MainScreenViewModel @Inject constructor(private var walletRepository : WalletRepository) : ViewModel() {
-    var refreshTime = MutableLiveData<String>()
     var response = MutableLiveData<Resource<WalletResponse>>()
-    //var time = Calendar.getInstance()
-
     init {
         getWallet()
     }
     fun getWallet() {
         viewModelScope.launch() {
-
             response.value = Resource.Loading()
             val result = withContext(Dispatchers.IO) {
                 walletRepository.getWallet()
@@ -37,7 +33,6 @@ class MainScreenViewModel @Inject constructor(private var walletRepository : Wal
             when(result) {
                 is Resource.Success -> {
                     response.value = Resource.Success(result.data!!)
-                    //refreshTime.value = getRefreshTime()
                 }
                 is Resource.Error -> {
                     response.value = Resource.Error(result.message.toString())

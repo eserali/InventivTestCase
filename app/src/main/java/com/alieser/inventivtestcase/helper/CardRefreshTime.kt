@@ -1,9 +1,10 @@
 package com.alieser.inventivtestcase.helper
 
+
 import java.util.Calendar
 
 class CardRefreshTime(
-    val cardNumber : String, // card no boş gelirse exp. fırlat
+    val cardNumber : String
 )
 {
     private var isFirstTime : Boolean = true
@@ -22,6 +23,7 @@ class CardRefreshTime(
         val minuteTimeValue = (refreshTime.toInt() / 60)
         val hourTimeValue = (minuteTimeValue / 60)
         if (hourTimeValue > 0) {
+
             return "$hourTimeValue hours ago"
         }
         if (minuteTimeValue > 0) {
