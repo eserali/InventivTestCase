@@ -191,7 +191,7 @@ fun MainScreen(mainScreenViewModel : MainScreenViewModel = hiltViewModel()) {
 }
 @OptIn(ExperimentalFoundationApi::class, ExperimentalGlideComposeApi::class)
 @Composable
-fun SwipeCardScreen(walletList : List<WalletItemResponse>) {
+fun SwipeCardScreen(walletList : List<WalletItemResponse>,mainScreenViewModel : MainScreenViewModel = hiltViewModel()) {
 
     val clipboardManager : ClipboardManager = LocalClipboardManager.current
     val context = LocalContext.current
@@ -228,6 +228,10 @@ fun SwipeCardScreen(walletList : List<WalletItemResponse>) {
     }
 
     if (isRefresh) {
+        /* Refresh butonuna tıklandığında kart numarasına göre sorgulama olmadığından,api dan tüm veriler
+        tekrar güncellemektedir. */
+
+        mainScreenViewModel.getWallets()
         isRefresh = false
         refreshTimeText = CardRefreshTimeManager.resetCardRefreshTime(walletList[indexState].number)
     } else {

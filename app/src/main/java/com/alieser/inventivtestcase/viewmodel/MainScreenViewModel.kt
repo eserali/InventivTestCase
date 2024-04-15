@@ -3,7 +3,6 @@ package com.alieser.inventivtestcase.viewmodel
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.alieser.inventivtestcase.CardRefreshTimeManager
 import com.alieser.inventivtestcase.Resource
 import com.alieser.inventivtestcase.entity.WalletResponse
 import com.alieser.inventivtestcase.repository.WalletRepository
@@ -11,20 +10,16 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.time.Duration
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.util.Calendar
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @HiltViewModel
 class MainScreenViewModel @Inject constructor(private var walletRepository : WalletRepository) : ViewModel() {
     var response = MutableLiveData<Resource<WalletResponse>>()
+
     init {
-        getWallet()
+        getWallets()
     }
-    fun getWallet() {
+    fun getWallets() {
         viewModelScope.launch() {
             response.value = Resource.Loading()
             val result = withContext(Dispatchers.IO) {
@@ -43,6 +38,5 @@ class MainScreenViewModel @Inject constructor(private var walletRepository : Wal
             }
         }
     }
-
 
 }
