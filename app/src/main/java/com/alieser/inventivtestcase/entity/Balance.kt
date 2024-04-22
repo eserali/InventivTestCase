@@ -10,13 +10,8 @@ data class Balance(
 ) {
     override fun toString(): String {
 
-        val formatter = DecimalFormat("#,###.00")
-        val symbols = DecimalFormatSymbols(Locale.getDefault())
-        symbols.groupingSeparator = ','
-        symbols.decimalSeparator = '.'
-        formatter.decimalFormatSymbols = symbols
-
-        return convertCurrency() + formatter.format(value.toInt() / 100)
+        val formatter = DecimalFormat("#,###,##0.00")
+        return convertCurrency() + formatter.format(value.toInt() / 100.0)
     }
     fun convertCurrency() : String{
         return when(currency) {
